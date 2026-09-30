@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" role="img" aria-labelledby="title desc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <title id="title">Cartridge Compass overview</title>
+  <desc id="desc">Your repositories are read by Cartridge Compass, which builds a project map and guard rails that Claude Code uses to work safely on Salesforce B2C Commerce projects.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#1a1740"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16324a"/>
+      <stop offset="1" stop-color="#122238"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2dd4bf"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="640" rx="20" fill="url(#bg)"/>
+  <rect x="0.5" y="0.5" width="1199" height="639" rx="20" fill="none" stroke="#334155"/>
+
+  <!-- Header -->
+  <g transform="translate(88 86)">
+    <circle r="42" fill="#0f1b30" stroke="url(#accent)" stroke-width="3"/>
+    <circle r="33" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="2 5"/>
+    <g transform="rotate(35)">
+      <polygon points="0,-30 8,0 0,4 -8,0" fill="#fb923c"/>
+      <polygon points="0,30 8,0 0,4 -8,0" fill="#94a3b8"/>
+    </g>
+    <circle r="3.5" fill="#0b1220"/>
+  </g>
+  <text x="152" y="86" font-size="44" font-weight="700" fill="#f8fafc">Cartridge Compass</text>
+  <text x="153" y="118" font-size="18" fill="#94a3b8">Project intelligence for AI coding agents on Salesforce B2C Commerce</text>
+
+  <!-- Column 1: workspace -->
+  <g>
+    <rect x="40" y="170" width="330" height="270" rx="16" fill="#111c33" stroke="#334155"/>
+    <text x="64" y="204" font-size="13" font-weight="700" letter-spacing="1.5" fill="#94a3b8">YOUR WORKSPACE</text>
+
+    <rect x="64" y="222" width="282" height="40" rx="10" fill="#0b1426" stroke="#1f2d47"/>
+    <text x="80" y="247" font-size="15" fill="#e2e8f0">storefront-sfra</text>
+    <rect x="270" y="231" width="64" height="22" rx="11" fill="#12324a"/>
+    <text x="302" y="246" font-size="12" font-weight="600" fill="#5eead4" text-anchor="middle">SFRA</text>
+
+    <rect x="64" y="272" width="282" height="40" rx="10" fill="#0b1426" stroke="#1f2d47"/>
+    <text x="80" y="297" font-size="15" fill="#e2e8f0">storefront-legacy</text>
+    <rect x="270" y="281" width="64" height="22" rx="11" fill="#3a2a17"/>
+    <text x="302" y="296" font-size="12" font-weight="600" fill="#fdba74" text-anchor="middle">SGJC</text>
+
+    <rect x="64" y="322" width="282" height="40" rx="10" fill="#0b1426" stroke="#1f2d47"/>
+    <text x="80" y="347" font-size="15" fill="#e2e8f0">headless</text>
+    <rect x="166" y="331" width="168" height="22" rx="11" fill="#1e2a52"/>
+    <text x="250" y="346" font-size="12" font-weight="600" fill="#93c5fd" text-anchor="middle">PWA Kit, Storefront Next</text>
+
+    <rect x="64" y="372" width="282" height="40" rx="10" fill="#0b1426" stroke="#1f2d47"/>
+    <text x="80" y="397" font-size="15" fill="#e2e8f0">integrations</text>
+    <rect x="240" y="381" width="94" height="22" rx="11" fill="#2a1f45"/>
+    <text x="287" y="396" font-size="12" font-weight="600" fill="#c4b5fd" text-anchor="middle">OCAPI, SCAPI</text>
+
+    <text x="205" y="431" font-size="12" fill="#64748b" text-anchor="middle">Read only. Never modified.</text>
+  </g>
+
+  <!-- Arrow 1 -->
+  <line x1="378" y1="305" x2="424" y2="305" stroke="#2dd4bf" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- Column 2: Cartridge Compass -->
+  <g>
+    <rect x="432" y="150" width="336" height="310" rx="18" fill="url(#hero)" stroke="url(#accent)" stroke-width="2"/>
+    <text x="600" y="190" font-size="22" font-weight="700" fill="#f8fafc" text-anchor="middle">Cartridge Compass</text>
+    <text x="600" y="212" font-size="13" fill="#94a3b8" text-anchor="middle">Builds the map the agent is missing</text>
+
+    <g font-size="15" fill="#e2e8f0">
+      <circle cx="466" cy="252" r="5" fill="#2dd4bf"/>
+      <text x="482" y="257"><tspan font-weight="600">Detects</tspan> the architecture of each repo</text>
+      <circle cx="466" cy="292" r="5" fill="#2dd4bf"/>
+      <text x="482" y="297"><tspan font-weight="600">Maps</tspan> repositories and site paths</text>
+      <circle cx="466" cy="332" r="5" fill="#2dd4bf"/>
+      <text x="482" y="337"><tspan font-weight="600">Inventories</tspan> routes, hooks and jobs</text>
+      <circle cx="466" cy="372" r="5" fill="#fb923c"/>
+      <text x="482" y="377"><tspan font-weight="600">Guards</tspan> deploys and credentials</text>
+    </g>
+
+    <rect x="464" y="402" width="272" height="34" rx="17" fill="#0b1426" stroke="#1f2d47"/>
+    <text x="600" y="424" font-size="13" fill="#5eead4" text-anchor="middle">Says "not configured" instead of guessing</text>
+  </g>
+
+  <!-- Arrow 2 -->
+  <line x1="776" y1="305" x2="822" y2="305" stroke="#2dd4bf" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <!-- Column 3: agent -->
+  <g>
+    <rect x="830" y="170" width="330" height="270" rx="16" fill="#111c33" stroke="#334155"/>
+    <text x="854" y="204" font-size="13" font-weight="700" letter-spacing="1.5" fill="#94a3b8">CLAUDE CODE, PROJECT AWARE</text>
+
+    <g font-size="15" fill="#e2e8f0">
+      <path d="M856 244 l5 5 l10 -11" fill="none" stroke="#2dd4bf" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="884" y="248">Knows which cartridge wins</text>
+      <text x="884" y="268" font-size="13" fill="#94a3b8">on each site, before editing</text>
+
+      <path d="M856 304 l5 5 l10 -11" fill="none" stroke="#2dd4bf" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="884" y="308">Asks where the map is blank</text>
+      <text x="884" y="328" font-size="13" fill="#94a3b8">rather than inventing APIs</text>
+
+      <path d="M856 364 l5 5 l10 -11" fill="none" stroke="#2dd4bf" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="884" y="368">Asks before touching an instance</text>
+      <text x="884" y="388" font-size="13" fill="#94a3b8">deploys, jobs, replication, roles</text>
+    </g>
+
+    <text x="995" y="424" font-size="12" fill="#64748b" text-anchor="middle">About 1,000 tokens always on</text>
+  </g>
+
+  <!-- Bottom strip: mistakes prevented -->
+  <text x="600" y="508" font-size="13" font-weight="700" letter-spacing="1.5" fill="#94a3b8" text-anchor="middle">STOPS THE MISTAKES AGENTS KEEP MAKING</text>
+  <g font-size="14" fill="#e2e8f0" text-anchor="middle">
+    <rect x="40" y="528" width="270" height="64" rx="12" fill="#111c33" stroke="#3b2a2a"/>
+    <text x="175" y="556" font-weight="600">Editing code that never runs</text>
+    <text x="175" y="576" font-size="12" fill="#94a3b8">a cartridge further left wins</text>
+
+    <rect x="330" y="528" width="270" height="64" rx="12" fill="#111c33" stroke="#3b2a2a"/>
+    <text x="465" y="556" font-weight="600">Mixing SFRA and SiteGenesis</text>
+    <text x="465" y="576" font-size="12" fill="#94a3b8">patterns from the wrong stack</text>
+
+    <rect x="620" y="528" width="270" height="64" rx="12" fill="#111c33" stroke="#3b2a2a"/>
+    <text x="755" y="556" font-weight="600">Inventing APIs and hooks</text>
+    <text x="755" y="576" font-size="12" fill="#94a3b8">and Business Manager settings</text>
+
+    <rect x="910" y="528" width="250" height="64" rx="12" fill="#111c33" stroke="#3b2a2a"/>
+    <text x="1035" y="556" font-weight="600">Unrequested deploys</text>
+    <text x="1035" y="576" font-size="12" fill="#94a3b8">changes nobody approved</text>
+  </g>
+
+  <text x="600" y="620" font-size="12" fill="#64748b" text-anchor="middle">Builds on Salesforce's official B2C Developer Tooling. Not affiliated with or endorsed by Salesforce or Anthropic.</text>
+</svg>

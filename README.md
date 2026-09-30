@@ -6,6 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Node.js 18.17+](https://img.shields.io/badge/node-%3E%3D18.17-brightgreen.svg)
 
+![Cartridge Compass reads your SFCC repositories, builds a project map and guard rails, and gives Claude Code the context it needs](docs/images/cartridge-compass-overview.svg)
+
 AI coding agents know SFCC in general. They do not know **your** project: which of your repositories is SFRA and which is SiteGenesis, which cartridge wins on which site, what is configured and what is not. Cartridge Compass gives them that map, tells them to stop and ask where the map is blank, and puts guard rails around anything that touches an instance.
 
 It sits on top of Salesforce's official [B2C Developer Tooling](https://github.com/SalesforceCommerceCloud/b2c-developer-tooling). The official plugins teach the platform. Cartridge Compass teaches the project.
