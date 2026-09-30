@@ -1,0 +1,13 @@
+{
+  "name": "cartridge-compass",
+  "owner": {
+    "name": "Cartridge Compass contributors"
+  },
+  "plugins": [
+    {
+      "name": "sfcc-kb",
+      "source": "./plugin",
+      "description": "Project intelligence for SFCC in Claude Code: inventory, knowledge-base building, change impact, SGJC and hybrid guidance. Complements the official Salesforce b2c plugins."
+    }
+  ]
+}

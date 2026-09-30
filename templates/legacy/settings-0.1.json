@@ -1,0 +1,52 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/dw.json)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)"
+    ],
+    "ask": [
+      "Bash(b2c code deploy *)",
+      "Bash(b2c code activate *)",
+      "Bash(b2c code delete *)",
+      "Bash(b2c code watch *)",
+      "Bash(b2c job *)",
+      "Bash(b2c sites cartridges add *)",
+      "Bash(b2c sites cartridges remove *)",
+      "Bash(b2c sites cartridges set *)",
+      "Bash(b2c webdav *)",
+      "Bash(b2c sandbox *)",
+      "Bash(b2c ods *)",
+      "Bash(b2c preferences *)",
+      "Bash(b2c slas *)",
+      "Bash(b2c ecdn *)",
+      "Bash(b2c mrt *)"
+    ],
+    "allow": [
+      "Bash(b2c docs *)",
+      "Bash(b2c code list *)",
+      "Bash(b2c sites list *)",
+      "Bash(b2c sites cartridges list *)",
+      "Bash(b2c logs *)",
+      "Bash(node *sfcc-inventory.mjs *)",
+      "Bash(node *sfcc-sitemap.mjs *)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "b2c-developer-tooling": {
+      "source": { "source": "github", "repo": "SalesforceCommerceCloud/b2c-developer-tooling" }
+    },
+    "sfcc-claude-kit": {
+      "source": { "source": "github", "repo": "YOUR_ORG/sfcc-claude-kit" }
+    }
+  },
+  "enabledPlugins": {
+    "b2c@b2c-developer-tooling": true,
+    "b2c-cli@b2c-developer-tooling": true,
+    "b2c-dx-mcp@b2c-developer-tooling": true,
+    "sfcc-kb@sfcc-claude-kit": true
+  }
+}

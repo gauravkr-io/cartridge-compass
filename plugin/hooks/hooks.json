@@ -1,0 +1,13 @@
+{
+  "description": "SFCC knowledge-base impact reminders",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/kb-impact.mjs\"", "timeout": 10 }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "cartridge-compass",
+  "version": "1.0.0",
+  "description": "Project intelligence for AI coding agents on Salesforce B2C Commerce (SFCC). Works with Claude Code.",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "sfcc-kit": "bin/sfcc-kit.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "validate": "node scripts/validate-kit.mjs",
+    "check": "npm run validate && npm test"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gauravkr-io/cartridge-compass.git"
+  },
+  "homepage": "https://github.com/gauravkr-io/cartridge-compass#readme",
+  "bugs": {
+    "url": "https://github.com/gauravkr-io/cartridge-compass/issues"
+  },
+  "license": "MIT",
+  "keywords": [
+    "sfcc",
+    "salesforce-commerce-cloud",
+    "b2c-commerce",
+    "sfra",
+    "sitegenesis",
+    "claude-code",
+    "ai-agents"
+  ]
+}

@@ -1,0 +1,6 @@
+# Check out text files with LF on every platform, so tests, the validator and
+# generated files behave the same on Windows, macOS and Linux.
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.zip binary

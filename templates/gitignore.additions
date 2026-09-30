@@ -1,0 +1,7 @@
+# Only needed if you commit the workspace root (shared mode). See SETUP.md.
+dw.json
+.env
+.env.*
+CLAUDE.local.md
+.claude/settings.local.json
+.sfcc-kit/backups/

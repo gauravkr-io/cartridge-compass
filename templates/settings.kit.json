@@ -1,0 +1,72 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/dw.json)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*.pfx)",
+      "Read(**/*.jks)",
+      "Bash(b2c auth token *)",
+      "Bash(b2c auth client *)"
+    ],
+    "ask": [
+      "Bash(b2c code deploy *)",
+      "Bash(b2c code activate *)",
+      "Bash(b2c code delete *)",
+      "Bash(b2c code watch *)",
+      "Bash(b2c job *)",
+      "Bash(b2c sites cartridges add *)",
+      "Bash(b2c sites cartridges remove *)",
+      "Bash(b2c sites cartridges set *)",
+      "Bash(b2c webdav *)",
+      "Bash(b2c sandbox *)",
+      "Bash(b2c ods *)",
+      "Bash(b2c preferences *)",
+      "Bash(b2c slas *)",
+      "Bash(b2c ecdn *)",
+      "Bash(b2c mrt *)",
+      "Bash(b2c scapi replications *)",
+      "Bash(b2c am *)",
+      "Bash(b2c bm *)",
+      "Bash(b2c cap install *)",
+      "Bash(b2c cap uninstall *)",
+      "Bash(b2c setup instance *)",
+      "Bash(b2c setup default-config *)",
+      "mcp__*__cartridge_deploy",
+      "mcp__*__webdav_put",
+      "mcp__*__scapi_execute",
+      "mcp__*__mrt_bundle_push",
+      "mcp__*__debug_start_session",
+      "mcp__*__debug_set_breakpoints",
+      "mcp__*__debug_evaluate",
+      "Edit(**/app_storefront_base/**)",
+      "Edit(**/cartridges/modules/**)"
+    ],
+    "allow": [
+      "Bash(b2c docs *)",
+      "Bash(b2c code list *)",
+      "Bash(b2c sites list *)",
+      "Bash(b2c sites cartridges list *)",
+      "Bash(b2c logs *)",
+      "Bash(node *sfcc-inventory.mjs *)",
+      "Bash(node *sfcc-sitemap.mjs *)",
+      "Bash(node *sfcc-kit.mjs detect *)",
+      "Bash(node *sfcc-kit.mjs doctor *)",
+      "Bash(node *sfcc-kit.mjs sync *)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "b2c-developer-tooling": {
+      "source": { "source": "github", "repo": "SalesforceCommerceCloud/b2c-developer-tooling" }
+    }
+  },
+  "enabledPlugins": {
+    "b2c@b2c-developer-tooling": true,
+    "b2c-cli@b2c-developer-tooling": true,
+    "b2c-dx-mcp@b2c-developer-tooling": true,
+    "sfcc-kb@cartridge-compass": true
+  }
+}
