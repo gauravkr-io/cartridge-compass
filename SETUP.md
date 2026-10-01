@@ -289,7 +289,91 @@ If you ran `run --steps 1-3`, the code inventory in `docs/ai/generated/` already
 
 ## 12. Build the project knowledge base (Recommended)
 
-In Claude Code, run `/sfcc-kb-init`. It stops after Phase 0 with a table per brand or site for you to confirm. Continue one phase per fresh session with `/sfcc-kb-init 1` and so on up to 8, or run several at once with `/sfcc-kb-init 1-4` or `/sfcc-kb-init all`. Progress is saved in `docs/ai/.kb-state.md`. After Phase 2, fill in the "Project conventions" section of `CLAUDE.md`.
+This is the step that turns the kit from "detects your repositories" into "knows your project". `/sfcc-kb-init` works through your repositories in nine numbered phases (0 to 8) and writes small, verified files into `docs/ai/`: which cartridges each site loads, how every cartridge is classified, which files override which, where hooks and APIs are used, and how your key business flows run. The agent loads these files on demand, so a larger knowledge base does not make every session more expensive.
+
+### Before you start
+
+| Check | Why |
+|---|---|
+| Sections 4 and 9 are done (`setup` ran, the `sfcc-kb` plugin is installed) | The command only exists once the plugin is installed |
+| You reviewed `docs/ai/repositories.md` (section 5) | A configured Type always beats detection |
+| The site map is imported (section 6) | Without cartridge paths the agent cannot tell which cartridge wins for a site |
+| Claude Code was started in the project root | Settings and the plugin load only from where you start it |
+| Optional: `run --steps 1-3` was used | It builds the code inventory with a script, so the first phases need fewer model tokens |
+| Optional: the B2C CLI is installed (section 8) | Phase 5 uses `b2c docs` to check whether the APIs you use are deprecated |
+
+### Choose how to run it
+
+| You type | What happens | Best for |
+|---|---|---|
+| `/sfcc-kb-init` | Runs Phase 0, then stops for your confirmation | First time, any project |
+| `/sfcc-kb-init 3` | Runs only that phase | One phase per fresh session. The cleanest context on large projects |
+| `/sfcc-kb-init 1-4` | Runs those phases in one session | Medium projects |
+| `/sfcc-kb-init all` | Runs Phases 0 to 8 in one session | Small projects, one or two repositories |
+
+Whichever you choose, the checkpoints that need your answer always pause the run, even in the middle of a range. After you reply, it carries on.
+
+A reasonable path for a large multi-repository project: `/sfcc-kb-init` first, then `/sfcc-kb-init 1-2`, then `/sfcc-kb-init 3-5`, then `/sfcc-kb-init 6`, then `/sfcc-kb-init 7-8`, each in a fresh session.
+
+### What each phase does
+
+| Phase | Name | What it produces | Needs you |
+|---|---|---|---|
+| 0 | Site and repository inventory | The map Repository, Site, Cartridge path, Cartridge in `docs/ai/project-map.md`, with shared and site-specific cartridges | **Yes.** Confirm one table per brand or site |
+| 1 | Environment | Build, lint and test commands, CI location, SFRA version, available tools, the `doctor` findings | Answer whether `dw.json` has a Safety Mode block |
+| 2 | Cartridge classification | Each cartridge labeled SFRA, SGJC, pipeline, hybrid or neutral, with evidence files | No |
+| 3 | Base and override map | SFRA version, whether base was modified, and which copy of each override wins per site | No |
+| 4 | SGJC and hybrid analysis | `docs/ai/migration.md`: legacy functionality, its SFRA replacement and whether it is still reachable | No |
+| 5 | API usage index | The `dw.*` classes, services and hooks your project really uses, deprecations, and the hook registry (which cartridge registers each extension point and where its script lives) | No |
+| 6 | Flows | One file per flow in `docs/ai/flows/`, tracing route, controller, model, service and template | **Yes.** Choose which flows matter (typical: checkout, payment, order placement, login, product page, cart) |
+| 7 | Site files and rules | `docs/ai/sites/<site-id>.md` for sites that really differ, plus project rules in `.claude/rules/` | **Yes.** Confirm which cartridges are vendor code |
+| 8 | Validation and report | A second check of everything against a fresh inventory, a list of what is still `[unknown]` or `[inferred]`, and the questions to ask your team | No |
+
+### What you will be asked
+
+1. **Phase 0, the confirmation table.** For each brand or site you see the repository, the full cartridge path, which cartridges are site-specific or shared, the architecture and the SFRA base. If two sources disagree (for example the site map and the instance), both values are shown and you decide.
+2. **Phase 0, site ownership.** Which repository each site's custom cartridges come from. The answer is saved to `site-map.json` and `repositories.md`.
+3. **Phase 6, the flows.** Pick the flows worth documenting. Each costs time and tokens, so start with the ones your team touches most.
+4. **Phase 7, vendor cartridges.** The agent does not assume every `int_*` cartridge is vendor code. You confirm which ones are.
+
+### How to read the results
+
+Every claim carries a label.
+
+| Label | Meaning |
+|---|---|
+| `[code]` | Verified in your source files |
+| `[docs]` | Verified in official Salesforce documentation |
+| `[code+docs]` | Both |
+| `[inferred]` | A reasonable conclusion, not proven. Treat as a question |
+| `[unknown]` | Could not be determined. Never filled in with a guess |
+
+The workflow only uses your project files, the generated inventory and your answers. It does not download anything or ask you to connect to GitHub. Anything that cannot be known locally is recorded as `[unknown]`.
+
+### Progress, resuming and re-running
+
+- Progress is saved after every phase in `docs/ai/.kb-state.md`. If a session ends or fills up, start a new one and run the next phase.
+- Running `/sfcc-kb-init` again on an existing knowledge base starts in diff mode. It regenerates the inventory, reports what changed since the commits recorded in `.kb-state.md` and updates only the affected sections.
+- For small changes, such as one new route or hook, the `sfcc-kb-sync` skill is enough. A reminder appears in Claude Code when structural files change.
+- The files stay yours. Anything outside the `kb:auto` markers is never overwritten.
+
+### After Phase 2: add your conventions
+
+Open the "Project conventions" section of `CLAUDE.md` and add the rules your team follows that the code does not show on its own. Short, specific lines work best, for example:
+
+```markdown
+- Use `scripts/util/log.js` with category `acme` for logging, never `Logger` directly.
+- New controllers extend the base route with `server.extend(module.superModule)`.
+- Prices are formatted only through `helpers/priceHelpers.js`.
+```
+
+Whenever the agent makes the same mistake twice, add one line here.
+
+### Check that it worked
+
+- `docs/ai/project-map.md` lists every site with its cartridge path and a classification table.
+- `docs/ai/.kb-state.md` shows the completed phases and the open questions.
+- Ask: "Which implementation of `Cart-Show` runs for `<site>`?" A good answer names files and cartridges, gives the evidence and says what it could not verify.
 
 ## 13. Test the setup
 

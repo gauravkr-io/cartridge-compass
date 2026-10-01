@@ -5,6 +5,7 @@
 [![CI](https://github.com/gauravkr-io/cartridge-compass/actions/workflows/ci.yml/badge.svg)](https://github.com/gauravkr-io/cartridge-compass/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Node.js 18.17+](https://img.shields.io/badge/node-%3E%3D18.17-brightgreen.svg)
+![B2C tooling needs Node.js 22.16+](https://img.shields.io/badge/B2C%20tooling-Node.js%2022.16%2B-orange.svg)
 
 ![Cartridge Compass reads your SFCC repositories, builds a project map and guard rails, and gives Claude Code the context it needs](docs/images/cartridge-compass-overview.svg)
 
@@ -40,7 +41,15 @@ Each capability below exists to stop one of these.
 
 ## Quick start
 
-Requirements: Node.js 18.17 or newer and [Claude Code](https://code.claude.com/docs). The B2C CLI, if you use it, needs Node.js 22.16 or newer.
+Requirements: [Claude Code](https://code.claude.com/docs) and Node.js. **The Node.js version you need depends on what you use:**
+
+| What you use | Minimum Node.js |
+|---|---|
+| Cartridge Compass (`sfcc-kit`, the scripts and the skills) | **18.17 or newer** |
+| Official B2C tooling (the `b2c` CLI, `b2c docs` and the `b2c-dx-mcp` plugin) | **22.16 or newer** |
+
+> [!IMPORTANT]
+> **The official B2C tooling needs Node.js 22.16 or newer.** On Node.js 18 or 20 the kit itself works, but the `b2c` CLI and the live `b2c docs` lookups will not. Check with `node --version` before you install them.
 
 Put Cartridge Compass next to your repositories, in a folder that is **not** a Git repository:
 
@@ -179,6 +188,8 @@ Details: [SECURITY.md](SECURITY.md).
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Every file and field, and what wins when they disagree |
 | [docs/MULTI-REPO.md](docs/MULTI-REPO.md) | Examples for real project layouts |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How it works and why it was built this way |
+| [docs/RELEASES.md](docs/RELEASES.md) | Every release at a glance, with what changed and what to do |
+| [CHANGELOG.md](CHANGELOG.md) | Full list of changes for each release |
 | [docs/UPGRADING.md](docs/UPGRADING.md) | Versions, upgrades and migrations |
 | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common problems and fixes |
 | [docs/KNOWLEDGE-MAINTENANCE.md](docs/KNOWLEDGE-MAINTENANCE.md) | Keeping the knowledge base accurate |

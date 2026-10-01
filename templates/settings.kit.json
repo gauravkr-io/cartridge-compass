@@ -51,11 +51,11 @@
       "Bash(b2c sites list *)",
       "Bash(b2c sites cartridges list *)",
       "Bash(b2c logs *)",
-      "Bash(node *sfcc-inventory.mjs *)",
-      "Bash(node *sfcc-sitemap.mjs *)",
-      "Bash(node *sfcc-kit.mjs detect *)",
-      "Bash(node *sfcc-kit.mjs doctor *)",
-      "Bash(node *sfcc-kit.mjs sync *)"
+      "Bash(node {{KIT}}/plugin/scripts/sfcc-inventory.mjs *)",
+      "Bash(node {{KIT}}/plugin/scripts/sfcc-sitemap.mjs *)",
+      "Bash(node {{KIT}}/bin/sfcc-kit.mjs detect *)",
+      "Bash(node {{KIT}}/bin/sfcc-kit.mjs doctor *)",
+      "Bash(node {{KIT}}/bin/sfcc-kit.mjs sync *)"
     ]
   },
   "enabledPlugins": {
