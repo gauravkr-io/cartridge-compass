@@ -58,15 +58,7 @@
       "Bash(node *sfcc-kit.mjs sync *)"
     ]
   },
-  "extraKnownMarketplaces": {
-    "b2c-developer-tooling": {
-      "source": { "source": "github", "repo": "SalesforceCommerceCloud/b2c-developer-tooling" }
-    }
-  },
   "enabledPlugins": {
-    "b2c@b2c-developer-tooling": true,
-    "b2c-cli@b2c-developer-tooling": true,
-    "b2c-dx-mcp@b2c-developer-tooling": true,
     "sfcc-kb@cartridge-compass": true
   }
 }

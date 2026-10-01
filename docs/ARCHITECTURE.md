@@ -40,6 +40,7 @@ lib/detect.mjs           repository discovery and multi-signal architecture dete
 lib/context.mjs          merges configuration over detection, loads the site map, renders project context
 lib/project-files.mjs    CLAUDE.md block, settings merge, managed file decisions, state
 lib/commands.mjs         setup, sync, detect, doctor, uninstall, protect-repos
+lib/steps.mjs            the numbered steps behind the run command
 plugin/                  Claude Code plugin (skills, agent, hook, scripts)
 templates/               files setup installs, plus 0.1 versions used to recognize unmodified old files
 knowledge/               modular knowledge base

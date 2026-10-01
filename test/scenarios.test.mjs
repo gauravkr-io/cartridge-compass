@@ -314,3 +314,12 @@ test('M2: a workspace written by a newer kit is refused, not downgraded', () => 
   assert.throws(() => run(root), /newer kit/);
   assert.equal(read(path.join(root, 'CLAUDE.md')), claude);
 });
+
+test('Setup does not register or enable the official B2C plugins, and adds no GitHub marketplace', () => {
+  const root = tmpRoot('nob2c');
+  sfraRepo(root);
+  run(root);
+  const settings = JSON.parse(read(path.join(root, '.claude/settings.json')));
+  assert.deepEqual(Object.keys(settings.enabledPlugins), ['sfcc-kb@cartridge-compass']);
+  assert.ok(!JSON.stringify(settings.extraKnownMarketplaces || {}).includes('github'));
+});

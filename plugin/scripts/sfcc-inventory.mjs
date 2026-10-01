@@ -123,6 +123,7 @@ const results = cartridges.map(({ name, dir }) => {
     signals: { sfra: new Set(), sgjc: new Set() },
     routes: [], hooks: [], jobSteps: [], services: new Set(), dwApi: {}, crossCartridgeRequires: new Set(),
     customApis: [], pageDesigner: 0, bmExtensions: false,
+    hookRegistrations: [], hookScripts: [], hooksFiles: [], hookIssues: [],
   };
   walk(inner, (f, base) => {
     const r = path.relative(inner, f).split(path.sep).join('/');
@@ -152,6 +153,7 @@ const results = cartridges.map(({ name, dir }) => {
     const isClient = r.startsWith('client/') || r.startsWith('static/');
     if (isClient) { if (r.startsWith('client/')) c.counts.clientJs++; return; }
     c.counts.serverJs++;
+    if (top === 'scripts' && /(^|\/)hooks?\//.test(r)) c.hookScripts.push(r);
     if (top === 'models' || r.includes('/models/')) c.counts.models++;
     const src = read(f);
     for (const [rx, label] of SIG.sfra) if (rx.test(src)) c.signals.sfra.add(label);
@@ -177,12 +179,19 @@ const results = cartridges.map(({ name, dir }) => {
     for (const m of src.matchAll(RX.crossCartridge)) if (m[1] !== name) c.crossCartridgeRequires.add(m[1]);
   });
   // hooks.json / caches via cartridge package.json; job steps via steptypes.json
-  const pkg = readJson(path.join(dir, 'package.json')) || readJson(path.join(inner, 'package.json'));
+  const pkgFile = [path.join(dir, 'package.json'), path.join(inner, 'package.json')].find((f) => fs.existsSync(f));
+  const pkg = pkgFile && readJson(pkgFile);
   if (pkg && pkg.hooks) {
-    const hj = readJson(path.resolve(dir, pkg.hooks)) || readJson(path.resolve(inner, pkg.hooks));
-    for (const h of (hj && hj.hooks) || []) c.hooks.push(`${h.name} -> ${h.script}`);
+    const hooksFile = [path.dirname(pkgFile), dir, inner].map((base) => path.resolve(base, pkg.hooks)).find((f) => fs.existsSync(f));
+    const hj = hooksFile && readJson(hooksFile);
+    if (!hj) c.hookIssues.push(`${rel(pkgFile)} registers "${pkg.hooks}", which is missing or not valid JSON`);
+    for (const h of (hj && hj.hooks) || []) {
+      c.hooks.push(`${h.name} -> ${h.script}`);
+      c.hookRegistrations.push({ name: h.name, script: h.script, cartridge: name, hooksFile: rel(hooksFile), scriptFile: rel(path.resolve(path.dirname(hooksFile), h.script)) });
+    }
   }
   walk(dir, (f, base) => {
+    if (base === 'hooks.json') c.hooksFiles.push(rel(f));
     if (base === 'bm_extensions.xml') c.bmExtensions = true;
     if (base === 'steptypes.xml') {
       for (const m of read(f).matchAll(/type-id="([^"]+)"/g)) c.jobSteps.push(`${m[1]} (steptypes.xml)`);
@@ -203,6 +212,7 @@ const results = cartridges.map(({ name, dir }) => {
     routes: [...new Set(c.routes)].sort(), hooks: c.hooks.sort(), jobSteps: c.jobSteps.sort(),
     services: [...c.services].sort(), crossCartridgeRequires: [...c.crossCartridgeRequires].sort(),
     customApis: [...new Set(c.customApis)].sort(),
+    hookScripts: c.hookScripts.sort(), hooksFiles: c.hooksFiles.sort(),
     dwApi: Object.fromEntries(Object.entries(c.dwApi).sort()),
   };
 });
@@ -255,11 +265,42 @@ packages.sort((a, b) => a.file.localeCompare(b.file));
 const usedBy = {};
 for (const s of sites) for (const n of s.cartridgePath || []) (usedBy[n] ||= []).push(s.siteId);
 
+// ---------- 4b. hook registry across cartridges ----------
+// A hooks.json can live in a different cartridge than the script it names, so registrations are
+// checked against every scanned cartridge, not only the one that registers them.
+const innerPath = (scriptFile, cartridge) => {
+  const prefix = `${cartridge.path}/cartridge/`;
+  return scriptFile.startsWith(prefix) ? scriptFile.slice(prefix.length) : null;
+};
+const hookRegistry = results.flatMap((c) => c.hookRegistrations.map((h) => {
+  const innerRel = innerPath(h.scriptFile, c);
+  const alsoIn = innerRel
+    ? results.filter((o) => o !== c && fs.existsSync(path.resolve(CWD, o.path, 'cartridge', innerRel))).map((o) => o.name).sort()
+    : [];
+  const exists = fs.existsSync(path.resolve(CWD, h.scriptFile));
+  return { ...h, innerRel, exists, alsoIn, status: exists ? 'found' : alsoIn.length ? 'only in other cartridge' : 'not found' };
+})).sort((a, b) => a.name.localeCompare(b.name) || a.cartridge.localeCompare(b.cartridge) || a.script.localeCompare(b.script));
+const registeredScripts = new Set(hookRegistry.flatMap((h) => [h.scriptFile, h.innerRel && `*/${h.innerRel}`].filter(Boolean)));
+const hookFindings = [];
+for (const c of results) {
+  for (const issue of c.hookIssues) hookFindings.push(`${c.name}: ${issue}`);
+  const registeredFiles = new Set(c.hookRegistrations.map((h) => h.hooksFile));
+  for (const f of c.hooksFiles) if (!registeredFiles.has(f)) hookFindings.push(`${c.name}: ${f} is not referenced by a "hooks" entry in this cartridge's package.json, so it is not registered from here`);
+  for (const s of c.hookScripts) {
+    if (!registeredScripts.has(`${c.path}/cartridge/${s}`) && !registeredScripts.has(`*/${s}`)) hookFindings.push(`${c.name}: cartridge/${s} is not named by any hooks.json that was scanned (unregistered, or registered outside the scanned folders)`);
+  }
+}
+for (const h of hookRegistry) {
+  if (h.status === 'not found') hookFindings.push(`${h.cartridge}: ${h.name} registers ${h.script}, but no such file exists in any scanned cartridge`);
+  else if (h.alsoIn.length) hookFindings.push(`${h.cartridge}: ${h.name} -> ${h.script} ${h.exists ? 'also exists in' : 'exists only in'} ${h.alsoIn.join(', ')}`);
+}
+hookFindings.sort();
+
 const siteMapSource = SITES_FILE ? rel(path.resolve(SITES_FILE)) : null;
 const unusedLocal = results.filter((c) => !usedBy[c.name]).map((c) => c.name);
 const clientOverrides = [...clientIndex.entries()].filter(([, l]) => l.length > 1)
   .map(([file, list]) => ({ file, cartridges: [...new Set(list)].sort() })).sort((a, b) => a.file.localeCompare(b.file));
-const inventory = { generator: 'sfcc-inventory v2', clientOverrides, siteMapSource, unusedLocal, roots: roots.map((r) => rel(path.resolve(r))), cartridges: results, sites, usedBy, overrides, duplicateNames, packages };
+const inventory = { generator: 'sfcc-inventory v2', clientOverrides, siteMapSource, unusedLocal, roots: roots.map((r) => rel(path.resolve(r))), cartridges: results, sites, usedBy, overrides, duplicateNames, packages, hookRegistry, hookFindings };
 
 // ---------- 5. render markdown ----------
 const t = (rows) => rows.map((r) => `| ${r.join(' | ')} |`).join('\n');
@@ -284,7 +325,13 @@ md.push(overrides.length ? t([['File (relative to cartridge/)', 'Cartridges'], [
 md.push('\n## Client files present in more than one cartridge (build-time override candidates)\n');
 md.push('These are resolved by the storefront build (for SFRA, `package.json` paths and sgmf-scripts), not by the cartridge path at runtime.\n');
 md.push(clientOverrides.length ? t([['File (relative to cartridge/)', 'Cartridges'], ['---', '---'], ...clientOverrides.map((o) => [o.file, o.cartridges.join(', ')])]) : '_None._');
-md.push('\nHooks are not overrides: every cartridge on a site path that registers an extension point runs, in path order.');
+md.push('\n## Hook registry\n');
+md.push('Hooks are not overrides: every cartridge on a site path that registers an extension point runs, in path order. The registering cartridge and the cartridge holding the script can differ. "Script found" means the file exists relative to the hooks.json that names it. Whether the platform also resolves a script from a different cartridge on the path is not verified here, so treat "also in" as something to confirm.\n');
+md.push(hookRegistry.length
+  ? t([['Extension point', 'Registered in', 'Script', 'Script status', 'Same file also in', 'Sites'], Array(6).fill('---'),
+    ...hookRegistry.map((h) => [h.name, h.cartridge, h.script, h.status, h.alsoIn.join(', ') || '-', (usedBy[h.cartridge] || []).join(', ') || '?'])])
+  : '_No hooks registered through a cartridge package.json._');
+if (hookFindings.length) md.push('\n**Hook findings**\n' + hookFindings.map((f) => `- ${f}`).join('\n'));
 for (const c of results) {
   md.push(`\n## ${c.name}\n`);
   md.push(`- Path: \`${c.path}\` (repo: ${c.repo})`);

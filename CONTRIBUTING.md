@@ -8,7 +8,7 @@ Thank you for helping. This kit is used across organizations, so every change mu
 2. **No secrets**, even fake-looking ones. Use `<placeholder>`.
 3. **Evidence for Salesforce claims.** Every platform fact needs a source in `knowledge/sources.md`. Official documentation first. See [docs/KNOWLEDGE-MAINTENANCE.md](docs/KNOWLEDGE-MAINTENANCE.md).
 4. **Optional stays optional.** A new setting must have a safe default and a "not configured" state. Add a test proving the kit works without it.
-5. **Safety first.** Kit code never reads credentials, never writes inside application repositories, never runs Git commands that change state, and never downloads anything.
+5. **Safety first.** Kit code never reads credentials, never writes inside application repositories, never runs Git commands that change state, and never downloads anything itself. The only command it starts is the local `claude plugin install` for the kit's own plugin in `run` step 4, on request.
 6. **Small context.** Always-on text (the `CLAUDE.md` block) must stay short. Put procedures in skills and facts in knowledge files.
 7. **Writing style.** Plain, precise English. No em dashes or semicolons in prose. No AI-attribution comments.
 

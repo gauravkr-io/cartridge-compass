@@ -1,0 +1,14 @@
+{
+  "sites": [
+    {
+      "id": "BrandOne",
+      "name": "Brand One",
+      "cartridgePath": "app_custom_brandone:app_brand_core:int_payment_sfra:app_storefront_base"
+    },
+    {
+      "id": "BrandTwo_DE",
+      "name": "Brand Two Germany",
+      "cartridgePath": ["app_custom_brandtwo", "app_brand_core", "plugin_wishlists", "app_storefront_base"]
+    }
+  ]
+}

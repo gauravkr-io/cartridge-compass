@@ -27,4 +27,4 @@ Commands with side effects on an instance (non-exhaustive, from the command tree
 
 ### 10.3 Official Claude Code plugins (marketplace `b2c-developer-tooling`)
 
-`b2c-cli`, `b2c`, `b2c-ops` (triage runbooks), `b2c-dx-mcp`, `storefront-next`, `storefront-next-figma`, `figma-to-sfnext-pagedesigner`, `b2c-python-sdk`. `[FACT R01]` The kit installs `b2c`, `b2c-cli` and `b2c-dx-mcp` only. `[KIT]`
+`b2c-cli`, `b2c`, `b2c-ops` (triage runbooks), `b2c-dx-mcp`, `storefront-next`, `storefront-next-figma`, `figma-to-sfnext-pagedesigner`, `b2c-python-sdk`. `[FACT R01]` The kit installs none of them. `b2c`, `b2c-cli` and `b2c-dx-mcp` are installed by the user, by hand, if wanted. `[KIT]`

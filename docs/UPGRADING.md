@@ -61,6 +61,10 @@ Installs made before the rename enable the plugin as `sfcc-kb@sfcc-claude-kit`. 
 4. In `/plugin`, disable or uninstall `sfcc-kb@sfcc-claude-kit` and remove the `sfcc-claude-kit` marketplace, so the plugin is not loaded twice. Then check that `sfcc-kb@sfcc-claude-kit` no longer appears under `enabledPlugins` in `.claude/settings.json`, and delete that line if it does.
 5. Start a new session. `/plugin` should list `sfcc-kb` once, from `cartridge-compass`. Run setup once more so the new plugin ID is recorded, then delete the old kit folder.
 
+## Official B2C plugins are no longer enabled by setup
+
+Earlier setups added the official B2C marketplace and enabled `b2c`, `b2c-cli` and `b2c-dx-mcp` in `.claude/settings.json`. Setup no longer does this, and `run` never installs them. Entries already in your settings are left alone. To stop using them, remove them with `/plugin` or delete the `b2c-developer-tooling` entries from `.claude/settings.json`. To install them by hand, see section 9 of [SETUP.md](../SETUP.md).
+
 ## Rolling back
 
 Check out the previous kit tag, then restore files from `.sfcc-kit/backups/<timestamp>/` if needed. Project configuration is never changed by an upgrade, so it needs no rollback.

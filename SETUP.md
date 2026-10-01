@@ -67,6 +67,10 @@ Setup creates or updates only these paths in the project root:
 
 Setup never writes inside your repositories, never runs Git commands and never reads `dw.json`. It is safe to run any number of times.
 
+The site map (`docs/ai/site-map.json`, `docs/ai/site-map.md`) and the code inventory (`docs/ai/generated/inventory.md`, `inventory.json`) are created later, by section 6 or by the `run` command (see "Doing it in fewer commands" below). `uninstall` removes them with the rest of `docs/ai`.
+
+To do sections 4, 6 and the kit plugin in section 9 in one command, jump to "Doing it in fewer commands".
+
 ## 5. Repository mapping (Recommended)
 
 Open `docs/ai/repositories.md`. Setup listed every Git repository it found, and every plain folder with SFCC or storefront evidence, with `Type: auto`.
@@ -124,17 +128,30 @@ More examples: [docs/MULTI-REPO.md](docs/MULTI-REPO.md).
 
 Without cartridge paths the agent cannot tell which cartridge wins for a site, and it says so instead of guessing.
 
-**Option A, import from Business Manager.**
+**Option A, import a site list.** Two formats work. Both are read by the same command.
 
-1. In Business Manager, open Administration > Sites > Manage Sites > (your site) > Settings.
-2. Copy the site name, ID and cartridge path into a tab-separated text file, one site per line. The columns are `Name`, `ID` and `Cartridge Path`.
+1. In Business Manager, open Administration > Sites > Manage Sites > (your site) > Settings and note each site's name, ID and cartridge path.
+2. Write them as JSON (recommended) or as a tab-separated text file.
 3. Run the import from the project root:
 
 ```bash
-node cartridge-compass/plugin/scripts/sfcc-sitemap.mjs --import sites.txt
+node cartridge-compass/plugin/scripts/sfcc-sitemap.mjs --import sites.json
 ```
 
-A ready-made example is in `cartridge-compass/templates/docs-ai/site-map.sample.txt`:
+JSON format. `cartridgePath` can be a colon-separated string or an array. A bare array of sites also works. A ready-made example is `cartridge-compass/templates/docs-ai/site-map.sample.json`:
+
+```json
+{
+  "sites": [
+    { "id": "BrandOne", "name": "Brand One", "cartridgePath": "app_custom_brandone:app_brand_core:app_storefront_base" },
+    { "id": "BrandTwo_DE", "name": "Brand Two Germany", "cartridgePath": ["app_custom_brandtwo", "app_brand_core", "app_storefront_base"] }
+  ]
+}
+```
+
+Tab-separated format. The columns are `Name`, `ID` and `Cartridge Path`, one site per line:
+
+The example is `cartridge-compass/templates/docs-ai/site-map.sample.txt`:
 
 ```text
 Name	ID	Cartridge Path
@@ -147,7 +164,7 @@ The import writes two files:
 - `docs/ai/site-map.json` is the source of truth. You edit this one.
 - `docs/ai/site-map.md` is generated analysis that the agent reads.
 
-Rows that are not three tab-separated columns are skipped and reported, so check the command output for skipped lines. The setup command prints these same steps at the end of its run.
+Entries without an ID or cartridge path are skipped and recorded in `importNotes`, so check the command output. The setup command prints these same steps at the end of its run.
 
 **Option B, read from `site.xml`.** If your repositories contain site import archives (`sites/<id>/site.xml`), `/sfcc-kb-init` reads cartridge paths from them. No action needed.
 
@@ -198,23 +215,45 @@ To allow deploys only with confirmation, keep a stricter level and add a command
 
 Test the credentials: `b2c sites list`. If authentication fails, `b2c setup` walks you through configuring an API client.
 
-## 9. Claude Code plugins (Required for skills, Recommended for official tools)
+## 9. Claude Code plugins
+
+### The kit plugin (Required for the skills)
 
 Run from the project root, never from inside a repository. Project scope writes to the root `.claude/settings.json`.
 
 ```bash
 claude plugin marketplace add ./cartridge-compass
 claude plugin install sfcc-kb@cartridge-compass --scope project
+```
 
+The marketplace is the kit folder on your disk, so this needs no network. A message that the plugin is already installed or enabled is fine. `run --steps 4` runs these two commands for you.
+
+### Official B2C plugins (Optional, manual)
+
+The kit never installs these and setup never enables them. Install them yourself only if you want them. Without them the kit still works, and the agent simply has no official B2C skills, CLI helpers or MCP tools to draw on.
+
+| Plugin | Gives you | Needs |
+|---|---|---|
+| `b2c` | Official B2C Commerce skills for the platform | Nothing extra |
+| `b2c-cli` | Skills for the `b2c` command line | The B2C CLI from section 8 |
+| `b2c-dx-mcp` | An MCP server with B2C tools (some can change an instance, and the kit's settings ask before they run) | Node.js 22.16 or newer and a root `dw.json` |
+
+1. Finish section 8 first if you want `b2c-cli` or `b2c-dx-mcp`.
+2. Run from the project root. The first command downloads the plugin list from GitHub, so it needs network access, and your machine may ask you to sign in to Git:
+
+```bash
 claude plugin marketplace add SalesforceCommerceCloud/b2c-developer-tooling
 claude plugin install b2c@b2c-developer-tooling --scope project
 claude plugin install b2c-cli@b2c-developer-tooling --scope project
 claude plugin install b2c-dx-mcp@b2c-developer-tooling --scope project
 ```
 
-A message that a plugin is already installed or enabled is fine. Setup already lists them in the settings file.
+3. Install only the ones you want. Each line is independent.
+4. Start a new Claude Code session, then check `/plugin` for the plugins and `/mcp` for `b2c-dx-mcp`.
 
-For headless work, the official marketplace also offers `storefront-next`. For production triage runbooks it offers `b2c-ops`.
+For headless work the same marketplace also offers `storefront-next`. For production triage runbooks it offers `b2c-ops`.
+
+The kit's permission rules for `b2c` commands and the B2C MCP tools are installed by setup whether or not the plugins are present. They only take effect when you install the plugins, and they keep deploys, jobs and other changes behind your approval.
 
 ## 10. Optional: keep kit files out of repository status
 
@@ -240,15 +279,17 @@ claude
 | Command in Claude Code | Expect |
 |---|---|
 | `/context` | `CLAUDE.md` under Memory files |
-| `/plugin` | `sfcc-kb`, `b2c`, `b2c-cli`, `b2c-dx-mcp` enabled |
-| `/mcp` | `b2c-dx-mcp` connected, if installed |
+| `/plugin` | `sfcc-kb` enabled, plus any official B2C plugins you installed |
+| `/mcp` | `b2c-dx-mcp` connected, only if you installed it |
 | `/permissions` | `b2c docs`, `b2c sites list` under allow. Deploy, job, replication and MCP deploy rules under ask. `dw.json` under deny |
 
 Ask the agent: "What do you know about this project and what is not configured?" It should answer from `docs/ai/generated/project-context.md`.
 
+If you ran `run --steps 1-3`, the code inventory in `docs/ai/generated/` already exists and `/sfcc-kb-init` reuses it instead of rebuilding it, which saves tokens.
+
 ## 12. Build the project knowledge base (Recommended)
 
-In Claude Code, run `/sfcc-kb-init`. It stops after Phase 0 with a table per brand or site for you to confirm. Continue one phase per fresh session with `/sfcc-kb-init 1` and so on up to 8. Progress is saved in `docs/ai/.kb-state.md`. After Phase 2, fill in the "Project conventions" section of `CLAUDE.md`.
+In Claude Code, run `/sfcc-kb-init`. It stops after Phase 0 with a table per brand or site for you to confirm. Continue one phase per fresh session with `/sfcc-kb-init 1` and so on up to 8, or run several at once with `/sfcc-kb-init 1-4` or `/sfcc-kb-init all`. Progress is saved in `docs/ai/.kb-state.md`. After Phase 2, fill in the "Project conventions" section of `CLAUDE.md`.
 
 ## 13. Test the setup
 
@@ -258,7 +299,33 @@ Useful first prompts:
 - "Which sites are affected if I change <shared helper>?"
 - "Which hooks run for dw.ocapi.shop.basket.afterPOST on <site>?"
 
+Hooks are tracked across cartridges. A `hooks.json` in one cartridge can name a script that lives in another, and the "Hook registry" section of `docs/ai/generated/inventory.md` shows each registration, where its script was found, and any script that nothing registers. It marks as unconfirmed whether the platform resolves a script that exists only in a different cartridge.
+
 A good answer names files, cartridges and the evidence, and says what it could not verify.
+
+## Doing it in fewer commands
+
+The numbered sections above can all be run one at a time. To run several in one go, use `run`:
+
+```bash
+node cartridge-compass/bin/sfcc-kit.mjs steps                                  # list the numbered steps
+node cartridge-compass/bin/sfcc-kit.mjs run --steps 1-3 --sites sites.json     # files, site map, inventory
+node cartridge-compass/bin/sfcc-kit.mjs run --all --sites sites.json           # everything the CLI can do
+node cartridge-compass/bin/sfcc-kit.mjs run --all --dry-run                    # preview, writes and installs nothing
+```
+
+| Step | What it does |
+|---|---|
+| 1 | Same as `setup` |
+| 2 | Imports the `--sites` file, or refreshes the analysis of an existing site map. Skipped if neither exists |
+| 3 | Generates the code inventory with a script, using no model tokens |
+| 4 | Installs the `sfcc-kb` plugin with `claude plugin marketplace add` and `claude plugin install`. This changes `.claude/settings.json`. The official B2C plugins are never installed by the kit (see section 9) |
+| 5 | Same as `doctor` |
+| 6 | Not run by the CLI. Start Claude Code and run `/sfcc-kb-init` |
+
+A step that fails is reported and the run goes on. The exit code is 1 if any step failed. Running it again is safe.
+
+For the knowledge base itself, `/sfcc-kb-init` accepts a phase (`/sfcc-kb-init 3`), a range (`/sfcc-kb-init 1-4`) or `all`. The two checkpoints that need your answer still pause the run. Running one phase per session remains the best choice for very large projects.
 
 ## 14. Troubleshooting
 
@@ -281,7 +348,7 @@ node cartridge-compass/bin/sfcc-kit.mjs uninstall          # preview
 node cartridge-compass/bin/sfcc-kit.mjs uninstall --apply  # remove kit-managed content
 ```
 
-This removes the kit block from `CLAUDE.md` (or the file, if nothing of yours remains), unedited kit rules, the settings entries the kit added, the generated context and the install state. It also deletes `docs/ai/` (repository mapping, project knowledge and generated files) and `.sfcc-kit/` (install state and backups), so copy anything you want to keep first. It keeps `dw.json` and `CLAUDE.local.md`. Remove the plugins from `/plugin`, then delete the kit folder.
+This removes the kit block from `CLAUDE.md` (or the file, if nothing of yours remains), unedited kit rules, the settings entries the kit added, the generated context and the install state. It also deletes `docs/ai/` (repository mapping, site map, project knowledge, the code inventory and other generated files) and `.sfcc-kit/` (install state and backups), so copy anything you want to keep first. The `docs/` folder is removed too when nothing else is in it. Other files you keep in `docs/` are never touched. It keeps `dw.json` and `CLAUDE.local.md`. Remove the plugins from `/plugin`, then delete the kit folder.
 
 ## Daily habits
 

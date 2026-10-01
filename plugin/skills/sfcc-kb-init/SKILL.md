@@ -1,13 +1,40 @@
 ---
 name: sfcc-kb-init
-description: Build or rebuild the SFCC project knowledge base (site/repository/cartridge map, SGJC/SFRA classification, migration state, key flows) in docs/ai/. Run only when the user invokes /sfcc-kb-init, optionally with a phase number to resume (e.g. /sfcc-kb-init 3).
+description: Build or rebuild the SFCC project knowledge base (site/repository/cartridge map, SGJC/SFRA classification, migration state, key flows) in docs/ai/. Run only when the user invokes /sfcc-kb-init, optionally with a phase number (/sfcc-kb-init 3), a range (/sfcc-kb-init 1-4) or all (/sfcc-kb-init all).
 disable-model-invocation: true
-argument-hint: "[phase number to resume, optional]"
+argument-hint: "[phase number, range such as 1-4, or all. Optional]"
 ---
 
 # SFCC knowledge base: initialize or rebuild
 
 This workflow builds a small, verified knowledge base that the rest of the project instructions rely on. It is designed to be safe to re-run: it resumes from `docs/ai/.kb-state.md`, regenerates mechanical facts with a script, and edits only sections it owns.
+
+## Choosing how much to run
+
+The argument selects the phases for this session. Phases always run in numeric order.
+
+| Argument | What runs |
+|---|---|
+| none | Phase 0, then stop (the first-time default, or diff mode on an existing KB) |
+| `N` | Phase N only |
+| `A-B` | Phases A through B in this one session |
+| `all` | Phases 0 through 8 in this one session |
+
+Rules for a multi-phase run:
+
+- The STOP checkpoints still apply. Phase 0d (confirm the site table) and Phase 6 (choose the flows) always wait for the user, even inside a range. After the user answers, continue with the next phase of the range without asking to start a new session.
+- After each phase, update `docs/ai/.kb-state.md`, then print one line: the phase done, what was written, what is open. Do not repeat the phase's content.
+- Keep context small. Read the generated inventory in slices (see "Reading the inventory"), delegate per-cartridge reading to `sfcc-cartridge-analyst`, and never paste file contents into the conversation.
+- If the session grows heavy or compacts, finish the current phase, record it in `.kb-state.md`, and tell the user to continue with `/sfcc-kb-init <next phase>` or the rest of the range. Nothing is lost, because each phase resumes from the state file.
+- Running the phases one per session (`/sfcc-kb-init 1`, then `/sfcc-kb-init 2`, and so on) remains fully supported and gives the cleanest context for large projects.
+
+## Reading the inventory
+
+The inventory is large on big projects. Do not open `inventory.md` in full.
+
+1. Prefer the files the CLI already produced. If `docs/ai/generated/inventory.json` exists, run `node "${CLAUDE_PLUGIN_ROOT}/scripts/sfcc-inventory.mjs" <repos> --sites docs/ai/site-map.json --out docs/ai/generated --check`. If it reports up to date, do not regenerate it. If it is stale or missing, regenerate it. (`node <kit>/bin/sfcc-kit.mjs run --steps 1-3` produces it with no model tokens.)
+2. Read only the Sites table and the Cartridges table first. Read a cartridge's own section (`## <name>`) or the "Hook registry" section only when a phase needs it, using Grep with a few lines of context.
+3. Answer questions about counts or lists from `inventory.json` with a small query, not by reading the Markdown.
 
 ## Ground rules for this workflow
 
@@ -17,6 +44,7 @@ This workflow builds a small, verified knowledge base that the rest of the proje
 - **Missing configuration is a state, not an error.** When a site path, BM path, site ID or repository mapping is missing, record it as not configured in `.kb-state.md` and continue with what is known.
 - **Delegate reading.** For per-cartridge analysis, spawn the `sfcc-cartridge-analyst` subagent (one per cartridge or small group) so raw file contents never enter the main context. Collect their summaries.
 - **Label confidence** on every non-trivial claim: `[code]` verified in source, `[docs]` verified in official Salesforce docs, `[code+docs]`, `[inferred]`, `[unknown]`. An inference is never written as a fact.
+- **Stay local.** Everything this workflow needs is in the project, the generated inventory or the user's answers. Do not download code or documentation, and do not ask the user to authenticate to GitHub or any other service. If something cannot be known from local files, record it as `[unknown]` and ask.
 - **Never write secrets.** Record where credentials are configured (file, preference or service ID), never their values. Do not open `dw.json` or `.env` files. They are denied in settings anyway.
 - **Stop at every checkpoint marked STOP** and wait for the user.
 
@@ -49,6 +77,8 @@ Read `docs/ai/generated/project-context.md` (written by `sfcc-kit setup` and `sf
   `node "${CLAUDE_PLUGIN_ROOT}/scripts/sfcc-inventory.mjs" <repo1> <repo2> ... --sites docs/ai/site-map.json --out docs/ai/generated`
 - **If the user pastes or attaches a list** of sites (name, ID, cartridge path), save it to a text file, import it with `sfcc-sitemap.mjs --import <file>`, and continue as above.
 - **Otherwise**, collect paths from the repository (`sites/<site-id>/site.xml` `<custom-cartridges>`, read by the inventory script without `--sites`) and, if a sandbox is configured, from the instance (`b2c sites list`, `b2c sites cartridges list`, read-only). Ask the user to confirm.
+
+If the user has the JSON site list, `sfcc-sitemap.mjs --import <file>.json` accepts it directly (`{ "sites": [{ "id", "name", "cartridgePath" }] }`, where `cartridgePath` is a string joined by colons or an array).
 
 (If the plugin root variable is unavailable, find the scripts under the installed plugin.)
 
@@ -87,7 +117,9 @@ Record in `project-map.md`: package managers and build commands per repo (from `
 
 For headless repositories (`pwa-kit`, `storefront-next`, `headless`), do not run cartridge classification. Record framework, package versions, build and deploy commands, and which SCAPI custom APIs or hooks in cartridge repositories they depend on. Use the official `storefront-next` plugin skills for framework details.
 
-For each cartridge in any site's path, spawn `sfcc-cartridge-analyst` with the cartridge path and the generated inventory entry. Ask it to return: purpose (one line), classification (SFRA / SGJC / hybrid / neutral integration / BM), evidence file paths, cross-cartridge dependencies, and anything that contradicts the script's signal. Build the classification table in `project-map.md`:
+Classify from the inventory first. A cartridge whose signal is a single clear style (`sfra`, `sgjc` or `pipeline`) with evidence in its inventory section needs no subagent. Record the signal and its evidence files directly. Spawn `sfcc-cartridge-analyst` only for cartridges whose signal is `hybrid` or `neutral`, that have no evidence, or that the user or the site map marks as suspicious. This is the largest saving in the whole workflow.
+
+For each cartridge that needs it, spawn `sfcc-cartridge-analyst` with the cartridge path and the generated inventory entry. Ask it to return: purpose (one line), classification (SFRA / SGJC / hybrid / neutral integration / BM), evidence file paths, cross-cartridge dependencies, and anything that contradicts the script's signal. Build the classification table in `project-map.md`:
 
 | Cartridge | Repo | Sites | Classification | Evidence | Confidence |
 |---|---|---|---|---|---|
@@ -96,7 +128,7 @@ Classify from implementation, never from the name alone. `neutral` is a valid an
 
 ## Phase 3: Base and override map
 
-Do not document base SFRA itself. It is public and Claude can read it. Record only: the exact SFRA version, whether base is modified in place (diff against the tagged release if available), and the override candidates list from the generated inventory resolved per site (which copy wins for that site's cartridge path: the leftmost copy for controllers, templates and modules, while every registered hook runs).
+Do not document base SFRA itself, and never download it. It is already in the project as the `app_storefront_base` cartridge. Do not fetch SFRA from GitHub or anywhere else, and do not ask the user to connect to GitHub for it. Record only: the exact SFRA version (from the inventory's storefront packages), whether base looks modified in place (use the repository's own Git history for `app_storefront_base` if it has any, otherwise record `[unknown]`), and the override candidates list from the generated inventory resolved per site (which copy wins for that site's cartridge path: the leftmost copy for controllers, templates and modules, while every registered hook runs).
 
 ## Phase 4: SGJC and hybrid analysis
 
@@ -108,6 +140,8 @@ Load the `sfcc-sgjc` and `sfcc-hybrid-migration` skills. For every SGJC or hybri
 Status values: `active`, `replaced-still-referenced`, `replaced-unreferenced (cleanup candidate)`, `unknown`. Never mark something obsolete without reachability evidence.
 
 ## Phase 5: API usage index
+
+Read the inventory's "Hook registry" section and its hook findings. For every extension point, record which cartridges register it, which cartridge holds each script, and which sites run it, in path order. Report every finding as a question for the team: scripts that no `hooks.json` names, registrations whose script is only in another cartridge, registrations with no script anywhere, and `hooks.json` files that no `package.json` references. A registration and its script can live in different cartridges, so never conclude a hook is missing because the script is not next to the registration. State clearly that the platform's behavior for scripts held only by another cartridge is not confirmed in this kit.
 
 From the generated inventory, list the dw.* classes, services, hooks, OCAPI and SCAPI usage **this project actually uses** (the inventory lists SCAPI custom APIs from `cartridge/rest-apis/`). This is a usage index with file references, not API documentation. Official capability is looked up on demand with `b2c docs read` and is never copied into the repo.
 

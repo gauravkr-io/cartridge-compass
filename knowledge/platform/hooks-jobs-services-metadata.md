@@ -14,6 +14,7 @@ Evidence labels and source IDs: see [INDEX.md](../INDEX.md) and [sources.md](../
 - `package.json` in the cartridge's top-level directory points to `hooks.json` with the `hooks` key. Paths in `hooks.json` are relative to that file. `[FACT S10]`
 - Within one `hooks.json`, several modules can be registered for one extension point. Their order cannot be controlled and all are called. `[FACT S09]`
 - Across cartridges, all registrations run in cartridge-path order. `[FACT S09]`
+- A `hooks.json` can sit in a different cartridge than the script it names. The inventory's hook registry lists each registration, whether the script exists relative to that `hooks.json`, and which other cartridges hold a file at the same path. Whether the platform resolves a script from another cartridge on the path when the file is missing next to the `hooks.json` is not confirmed. `[UNKNOWN]`
 - For Shopper API extension points, a hook that returns a value skips the system implementation and all subsequent registered hooks. Salesforce recommends returning nothing so that functions such as cart calculation still run. Custom extension points always run every registration. `[FACT S10]`
 - OCAPI and SCAPI share the same hook extension points, which keep the historical `dw.ocapi.shop.*` prefix. `[FACT S14]`
 - SCAPI hook execution must be enabled in Business Manager (Administration > Global Preferences > Feature Switches). `[FACT S10]`

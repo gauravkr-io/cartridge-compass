@@ -2,8 +2,9 @@
 /**
  * sfcc-sitemap: user-provided site map for Claude Code (no site.xml needed).
  *
- *   Import a Business Manager export (Name <TAB> ID <TAB> cartridge:path:...):
- *     node sfcc-sitemap.mjs --import sites.txt [--map docs/ai/site-map.json]
+ *   Import a site list, as tab-separated text (Name <TAB> ID <TAB> cartridge:path:...)
+ *   or as JSON (a ".json" file with { "sites": [{ "id", "name", "cartridgePath" }] }):
+ *     node sfcc-sitemap.mjs --import sites.txt|sites.json [--map docs/ai/site-map.json]
  *   Render the analysis Claude reads:
  *     node sfcc-sitemap.mjs [--map docs/ai/site-map.json] [--out docs/ai/site-map.md] [--check]
  *
@@ -22,13 +23,11 @@ const IMPORT = opt('--import', null);
 const CHECK = args.includes('--check');
 
 // ---------- import ----------
-if (IMPORT) {
-  const prev = fs.existsSync(MAP) ? JSON.parse(fs.readFileSync(MAP, 'utf8')) : null;
-  const prevById = Object.fromEntries((prev?.sites || []).map((s) => [s.id, s]));
-  const notes = new Set();
-  const sites = [];
+// Both input formats become the same rows: { name, id, pathRaw }. pathRaw is a string or an array.
+function rowsFromTabs(text, notes) {
+  const rows = [];
   let lineNo = 0;
-  for (const raw of fs.readFileSync(IMPORT, 'utf8').split(/\r?\n/)) {
+  for (const raw of text.split(/\r?\n/)) {
     lineNo++;
     if (!raw.trim()) continue;
     // Split on single tabs so an empty column keeps its position instead of shifting the others.
@@ -38,10 +37,49 @@ if (IMPORT) {
       notes.add(`Line ${lineNo} skipped: expected Name, ID and Cartridge Path separated by tabs.`);
       continue;
     }
-    const [name, idRaw, pathRaw] = cols;
+    rows.push({ name: cols[0], id: cols[1], pathRaw: cols[2] });
+  }
+  return rows;
+}
+
+// Accepts { sites: [...] }, a bare array, or { data | items: [...] }. Field names are matched loosely
+// so a hand-written file and a tool export both work.
+function rowsFromJson(text, notes) {
+  let doc;
+  try { doc = JSON.parse(text); } catch (err) { throw new Error(`not valid JSON: ${err.message}`); }
+  const list = Array.isArray(doc) ? doc : doc.sites || doc.data || doc.items;
+  if (!Array.isArray(list)) throw new Error('expected an array of sites, or an object with a "sites" array.');
+  const pick = (item, keys) => keys.map((k) => item[k]).find((v) => v !== undefined && v !== null && v !== '');
+  const rows = [];
+  list.forEach((item, i) => {
+    const id = item && pick(item, ['id', 'siteId', 'site_id']);
+    const pathRaw = item && pick(item, ['cartridgePath', 'cartridges', 'cartridge_path', 'customCartridges']);
+    if (!id || !pathRaw) {
+      notes.add(`Entry ${i + 1} skipped: needs an id and a cartridgePath.`);
+      return;
+    }
+    rows.push({ name: pick(item, ['name', 'displayName', 'display_name']) || '', id: String(id), pathRaw });
+  });
+  return rows;
+}
+
+if (IMPORT) {
+  const prev = fs.existsSync(MAP) ? JSON.parse(fs.readFileSync(MAP, 'utf8')) : null;
+  const prevById = Object.fromEntries((prev?.sites || []).map((s) => [s.id, s]));
+  const notes = new Set();
+  const text = fs.readFileSync(IMPORT, 'utf8');
+  let rows;
+  try {
+    rows = /\.json$/i.test(IMPORT) ? rowsFromJson(text, notes) : rowsFromTabs(text, notes);
+  } catch (err) {
+    console.error(`sfcc-sitemap: cannot import ${IMPORT}: ${err.message}`);
+    process.exit(2);
+  }
+  const sites = [];
+  for (const { name, id: idRaw, pathRaw } of rows) {
     const id = idRaw.trim();
     if (idRaw !== id) notes.add(`Site ID "${idRaw}" had surrounding whitespace; stored as "${id}".`);
-    let p = pathRaw;
+    let p = Array.isArray(pathRaw) ? pathRaw.join(':') : String(pathRaw);
     if (p.startsWith('-')) { p = p.slice(1); notes.add('Leading "-" before cartridge paths was removed (copy/paste artifact).'); }
     const cartridgePath = p.split(':').map((c) => c.trim()).filter(Boolean);
     const old = prevById[id] || {};

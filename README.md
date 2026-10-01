@@ -32,8 +32,8 @@ Each capability below exists to stop one of these.
 | **Discovery and detection** | Finds the repositories in your workspace and identifies their architecture from evidence in the code, with a confidence level |
 | **Repository mapping** | One readable file, `docs/ai/repositories.md`, where you state what each repository is. Your word always beats detection |
 | **Project context** | A generated file the agent reads first: what is known, and what is explicitly **not configured** |
-| **Site analysis** | Imports your sites' cartridge paths and shows overrides, shared cartridges and legacy variants per site |
-| **Code inventory** | Deterministic facts: routes, hooks, job steps, services, `dw.*` usage, custom APIs, overrides |
+| **Site analysis** | Imports your sites' cartridge paths from JSON or text and shows overrides, shared cartridges and legacy variants per site |
+| **Code inventory** | Deterministic facts: routes, job steps, services, `dw.*` usage, custom APIs, overrides, and a hook registry that follows a registration to its script even when they sit in different cartridges |
 | **Guard rails** | Approval required for deploys, jobs, replication, user and role changes and MCP write tools. Credential files are unreadable |
 | **Skills** | Knowledge-base building, change impact, SiteGenesis and pipeline work, hybrid migration, doc sync |
 | **Knowledge base** | Small, source-backed files the agent loads only when the task needs them |
@@ -59,16 +59,16 @@ node cartridge-compass/bin/sfcc-kit.mjs detect      # see what it finds, writes 
 node cartridge-compass/bin/sfcc-kit.mjs setup       # safe to run again at any time
 ```
 
-Then install the plugins (setup prints these commands with the right paths):
+Prefer one command? `run --all` does setup, the site map, the code inventory, the kit plugin install below and the health check in one go. See [One command or step by step](#one-command-or-step-by-step).
+
+Then install the kit plugin (setup prints these commands with the right paths, and `run --steps 4` runs them for you):
 
 ```bash
 claude plugin marketplace add ./cartridge-compass
 claude plugin install sfcc-kb@cartridge-compass --scope project
-claude plugin marketplace add SalesforceCommerceCloud/b2c-developer-tooling
-claude plugin install b2c@b2c-developer-tooling --scope project
-claude plugin install b2c-cli@b2c-developer-tooling --scope project
-claude plugin install b2c-dx-mcp@b2c-developer-tooling --scope project
 ```
+
+The official B2C plugins are optional and always installed by hand. The kit never installs them. See "Official B2C plugins" in [SETUP.md](SETUP.md#9-claude-code-plugins) for the steps and what each one needs.
 
 Start `claude` in the project root and ask: *"What do you know about this project, and what is not configured?"*
 
@@ -79,10 +79,33 @@ Everything else is optional: site cartridge paths (see below), the Business Mana
 Cartridge paths let the agent work out which cartridge wins for each site. To add them:
 
 1. In Business Manager, open Administration > Sites > Manage Sites > (your site) > Settings.
-2. Copy each site's name, ID and cartridge path into a tab-separated text file, one site per line. See `cartridge-compass/templates/docs-ai/site-map.sample.txt`.
-3. Run `node cartridge-compass/plugin/scripts/sfcc-sitemap.mjs --import sites.txt`.
+2. Write each site's ID, name and cartridge path into a JSON file. See `cartridge-compass/templates/docs-ai/site-map.sample.json`. A tab-separated text file also works.
+3. Run `node cartridge-compass/plugin/scripts/sfcc-sitemap.mjs --import sites.json`.
 
-This writes `docs/ai/site-map.json` (the source of truth you edit) and `docs/ai/site-map.md` (generated analysis the agent reads). Rows that are not three tab-separated columns are skipped and reported. More detail is in [SETUP.md](SETUP.md).
+This writes `docs/ai/site-map.json` (the source of truth you edit) and `docs/ai/site-map.md` (generated analysis the agent reads). Entries without an ID or cartridge path are skipped and reported. More detail is in [SETUP.md](SETUP.md).
+
+## One command or step by step
+
+Each setup step can be run on its own, or several together:
+
+```bash
+node cartridge-compass/bin/sfcc-kit.mjs steps                               # list the numbered steps
+node cartridge-compass/bin/sfcc-kit.mjs run --steps 1-3 --sites sites.json  # files, site map, inventory
+node cartridge-compass/bin/sfcc-kit.mjs run --all --sites sites.json        # everything the CLI can do
+```
+
+| Step | What it does |
+|---|---|
+| 1 | Same as `setup` |
+| 2 | Imports the `--sites` file, or refreshes an existing site map |
+| 3 | Generates the code inventory with a script, using no model tokens |
+| 4 | Installs the `sfcc-kb` plugin. The official B2C plugins are not included |
+| 5 | Same as `doctor` |
+| 6 | Build the knowledge base. Runs inside Claude Code, so the CLI only reminds you |
+
+Add `--dry-run` to preview. A failed step is reported and the run continues.
+
+Inside Claude Code, `/sfcc-kb-init` takes a phase (`/sfcc-kb-init 3`), a range (`/sfcc-kb-init 1-4`) or `all`. The checkpoints that need your answer still pause the run. Details are in [SETUP.md](SETUP.md).
 
 ## Supported architectures
 
@@ -129,9 +152,11 @@ The always-on cost is roughly a thousand tokens. Everything else is loaded on de
 |---|---|---|
 | `setup` | yes | Create or update everything. Idempotent and upgrade-safe |
 | `sync` | yes | Add newly cloned repositories and refresh the project context |
+| `run` | yes | Run several setup steps at once: `--steps 1-4`, `--steps 1,3` or `--all`. Add `--sites <file>` to import cartridge paths |
+| `steps` | no | List the numbered steps that `run` accepts |
 | `detect` | no | Show discovered repositories with their evidence |
 | `doctor` | no | Check configuration, versions and safety settings |
-| `uninstall` | with `--apply` | Remove everything the kit created, including `docs/ai` and `.sfcc-kit` |
+| `uninstall` | with `--apply` | Remove everything the kit created, including `docs/ai` (and `docs` itself if nothing of yours is in it) and `.sfcc-kit` |
 | `protect-repos` | opt-in | Keep kit files out of each repository's `git status` |
 
 Run them as `node cartridge-compass/bin/sfcc-kit.mjs <command>`. Add `--dry-run` to preview.
@@ -142,7 +167,7 @@ Run them as `node cartridge-compass/bin/sfcc-kit.mjs <command>`. Add `--dry-run`
 - Refuses to run when the project root is inside a Git repository, and never runs Git itself.
 - Never reads `dw.json`, `.env` or keys, and denies them to the agent.
 - Never overwrites what you wrote. Replaced files are backed up to `.sfcc-kit/backups/`.
-- No dependencies and no network access.
+- No dependencies. The kit's own code makes no network calls. The one exception is `run` step 4, which calls the `claude` command to install the kit's own plugin from your local disk, and only when you ask for that step.
 
 Details: [SECURITY.md](SECURITY.md).
 

@@ -17,11 +17,11 @@ Report vulnerabilities privately to the repository maintainers rather than in a 
 | Destructive setup | Identical content is never rewritten. Replaced files are backed up. User-edited managed files are never overwritten. `uninstall` previews unless `--apply` |
 | Instance changes by the agent | Ask rules for deploy, activate, jobs, WebDAV, sandbox, preferences, replication, users, roles, apps and MCP write tools. B2C Safety Mode recommended as a tool-level boundary |
 | Hook input | The KB hook sanitizes the session ID before using it in a temporary file name and only prints a reminder |
-| External downloads | None. No dependencies, no network access |
+| External downloads | None by the kit's own code. No dependencies. `run` step 4 calls the `claude` command to install the kit's own plugin from the local kit folder, and it runs only when requested. The official B2C plugins are installed by the user and are never fetched by the kit |
 
 ## Review performed for 1.0.0
 
-Checked: credential handling, secret leakage in output, shell execution (the kit spawns no shell, tests use `execFileSync` with fixed arguments), destructive operations, path traversal, symbolic links, unintended Git operations, generated configuration, external downloads, and deletion paths. Findings fixed during the review: the hook used the raw session ID in a file path, and the 0.1 site list import could shift columns. Known limitation: permission rules match command text and tool names, so a determined bypass through a different binary path is possible. That is why Safety Mode is recommended.
+Checked: credential handling, secret leakage in output, shell execution (the kit spawns no shell. `run` and the tests use `execFileSync` with argument lists, never a command string), destructive operations, path traversal, symbolic links, unintended Git operations, generated configuration, external downloads, and deletion paths. Findings fixed during the review: the hook used the raw session ID in a file path, and the 0.1 site list import could shift columns. Known limitation: permission rules match command text and tool names, so a determined bypass through a different binary path is possible. That is why Safety Mode is recommended.
 
 ## Limitations
 

@@ -72,7 +72,7 @@ Accepted aliases include `SFRA`, `SiteGenesis`, `SGPP`, `Storefront Next`, `sfne
 
 ## `docs/ai/site-map.json`
 
-Created by `sfcc-sitemap.mjs --import`. Schema `sfcc-sitemap/v1`.
+Created by `sfcc-sitemap.mjs --import <file>` or by `sfcc-kit run` step 2. The input file can be JSON (a `sites` array or a bare array, with `id`, `name` and `cartridgePath` as a colon-separated string or an array) or tab-separated text. Schema `sfcc-sitemap/v1`.
 
 | Field | Required | Notes |
 |---|---|---|
@@ -89,8 +89,8 @@ Created by `sfcc-sitemap.mjs --import`. Schema `sfcc-sitemap/v1`.
 |---|---|---|
 | `docs/ai/generated/project-context.md` | `setup`, `sync` | First file an agent reads |
 | `docs/ai/generated/project-context.json` | `setup`, `sync` | Same data for tools and other agents |
-| `docs/ai/generated/inventory.md`, `inventory.json` | `sfcc-inventory.mjs` | Code facts |
-| `docs/ai/site-map.md` | `sfcc-sitemap.mjs` | Site and cartridge analysis |
+| `docs/ai/generated/inventory.md`, `inventory.json` | `sfcc-inventory.mjs`, `run` step 3 | Code facts, including the cross-cartridge hook registry |
+| `docs/ai/site-map.md` | `sfcc-sitemap.mjs`, `run` step 2 | Site and cartridge analysis |
 | `.sfcc-kit/state.json` | `setup` | Kit version, configuration version, managed file hashes, settings entries added |
 | `.sfcc-kit/backups/<timestamp>/` | `setup` | Copies of files before the kit changed them. Deleted by `uninstall --apply` |
 

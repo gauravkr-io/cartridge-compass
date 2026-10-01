@@ -60,3 +60,47 @@ test('site map exits cleanly on invalid JSON', () => {
   put(path.join(root, 'docs/ai/site-map.json'), '{ nope');
   assert.throws(() => node([script('sfcc-sitemap.mjs')], root), (err) => err.status === 2);
 });
+
+test('hook registry connects a registration to scripts in other cartridges and reports gaps', () => {
+  const root = tmpRoot('hooks');
+  const cart = (name) => path.join(root, 'repo/cartridges', name);
+  put(path.join(cart('app_left'), 'cartridge/app_left.properties'), 'x=1\n');
+  put(path.join(cart('app_left'), 'cartridge/scripts/hooks/calculate.js'), 'exports.calculate = function () {};\n');
+  put(path.join(cart('app_left'), 'cartridge/scripts/hooks/unused.js'), 'exports.unused = function () {};\n');
+  put(path.join(cart('int_right'), 'cartridge/int_right.properties'), 'x=1\n');
+  put(path.join(cart('int_right'), 'package.json'), JSON.stringify({ hooks: './hooks.json' }));
+  put(path.join(cart('int_right'), 'hooks.json'), JSON.stringify({ hooks: [
+    { name: 'dw.order.calculate', script: './cartridge/scripts/hooks/calculate.js' },
+    { name: 'dw.order.calculateTax', script: './cartridge/scripts/hooks/tax.js' },
+  ] }));
+  node([script('sfcc-inventory.mjs'), 'repo', '--out', 'gen'], root);
+  const inv = JSON.parse(read(path.join(root, 'gen/inventory.json')));
+  const byName = Object.fromEntries(inv.hookRegistry.map((h) => [h.name, h]));
+  assert.equal(byName['dw.order.calculate'].status, 'only in other cartridge');
+  assert.deepEqual(byName['dw.order.calculate'].alsoIn, ['app_left']);
+  assert.equal(byName['dw.order.calculateTax'].status, 'not found');
+  assert.ok(inv.hookFindings.some((f) => /app_left: cartridge\/scripts\/hooks\/unused\.js is not named/.test(f)));
+  assert.ok(!inv.hookFindings.some((f) => /calculate\.js is not named/.test(f)), 'a script registered from another cartridge is not an orphan');
+  assert.match(read(path.join(root, 'gen/inventory.md')), /## Hook registry/);
+});
+
+test('site map imports JSON with a string or array cartridge path and reports bad entries', () => {
+  const root = tmpRoot('smjson');
+  put(path.join(root, 'sites.json'), JSON.stringify({ sites: [
+    { id: 'SiteA', name: 'Site A', cartridgePath: 'app_a:app_storefront_base' },
+    { siteId: 'SiteB', cartridges: ['app_b', 'app_storefront_base'] },
+    { name: 'No id', cartridgePath: 'app_c' },
+  ] }));
+  node([script('sfcc-sitemap.mjs'), '--import', 'sites.json'], root);
+  const map = JSON.parse(read(path.join(root, 'docs/ai/site-map.json')));
+  assert.deepEqual(map.sites.map((s) => s.id), ['SiteA', 'SiteB']);
+  assert.deepEqual(map.sites[1].cartridgePath, ['app_b', 'app_storefront_base']);
+  assert.ok(map.importNotes.some((n) => /Entry 3 skipped/.test(n)));
+  assert.ok(fs.existsSync(path.join(root, 'docs/ai/site-map.md')));
+});
+
+test('site map import exits cleanly on malformed JSON input', () => {
+  const root = tmpRoot('smjsonbad');
+  put(path.join(root, 'sites.json'), '{ nope');
+  assert.throws(() => execFileSync(process.execPath, [script('sfcc-sitemap.mjs'), '--import', 'sites.json'], { cwd: root, stdio: 'pipe' }), (err) => err.status === 2 && /not valid JSON/.test(String(err.stderr)));
+});
