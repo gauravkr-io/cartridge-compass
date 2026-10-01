@@ -1,6 +1,6 @@
 {
   "name": "sfcc-kb",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Cartridge Compass plugin: deterministic SFCC inventory, knowledge-base bootstrap, SGJC, pipeline and migration guidance, change-impact analysis, and doc-sync reminders. Works with any mix of SFRA, SiteGenesis, API and headless repositories. Complements the official b2c plugins.",
   "author": {
     "name": "Cartridge Compass contributors"

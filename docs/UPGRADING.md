@@ -51,6 +51,28 @@ What setup does on upgrade:
 
 After upgrading from 0.1, move any content that Phase 7 wrote into `sfcc-sgjc-cartridges.md` to a project rule such as `sfcc-project-legacy.md`, then delete the old file and run setup so the kit rule is installed.
 
+## Upgrading from 1.0.0 to 1.1.0
+
+Rerun setup: recommended. Configuration migration: none. Agent behavior: changed.
+
+```bash
+git -C cartridge-compass pull
+node cartridge-compass/bin/sfcc-kit.mjs setup --dry-run
+node cartridge-compass/bin/sfcc-kit.mjs setup
+node cartridge-compass/bin/sfcc-kit.mjs run --steps 3     # optional: rebuild the inventory with the new hook registry
+```
+
+Then update `sfcc-kb` from `/plugin` in Claude Code.
+
+What to know:
+
+- **Official B2C plugins.** Setup no longer enables `b2c`, `b2c-cli` and `b2c-dx-mcp`, and no longer adds their GitHub marketplace. Entries already in `.claude/settings.json` stay as they are. Remove them with `/plugin` if you do not want them. Installing them is now a manual step, described in section 9 of [SETUP.md](../SETUP.md).
+- **Hook registry.** `docs/ai/generated/inventory.md` has a new "Hook registry" section. Regenerate the inventory to get it. Existing knowledge-base files are not changed. Run `/sfcc-kb-init 5` to refresh the hook and API usage index.
+- **`/sfcc-kb-init` arguments.** `/sfcc-kb-init 1-4` and `/sfcc-kb-init all` now run several phases in one session. One phase per session still works.
+- **Site map.** `sfcc-sitemap.mjs --import` accepts JSON as well as tab-separated text. Your existing `site-map.json` is unchanged.
+- **Uninstall.** `uninstall --apply` now also removes an empty `docs` folder. It was already removing `docs/ai`.
+- **Rolling back.** Check out the `v1.0.0` tag. No project files need restoring.
+
 ## Switching to the cartridge-compass marketplace
 
 Installs made before the rename enable the plugin as `sfcc-kb@sfcc-claude-kit`. That keeps working, and setup never changes it. Switch when convenient, in a quiet moment rather than mid-task:

@@ -40,5 +40,7 @@ Runs `scripts/validate-kit.mjs` and all tests. Pull requests must pass it. Tests
 Releases are published in fixed windows: March and September always, June and December only when changes have accumulated, and patch releases at any time for urgent issues. See [docs/KNOWLEDGE-MAINTENANCE.md](docs/KNOWLEDGE-MAINTENANCE.md).
 
 1. Update `CHANGELOG.md` with the three impact lines (rerun setup, configuration change, agent behavior).
-2. Bump the version in `package.json` and `plugin/.claude-plugin/plugin.json` together. `npm run validate` checks they match.
-3. Tag the release `vX.Y.Z`.
+2. Add the version to the table in [docs/RELEASES.md](docs/RELEASES.md) and write its upgrade notes in [docs/UPGRADING.md](docs/UPGRADING.md).
+3. Bump the version in `package.json` and `plugin/.claude-plugin/plugin.json` together. `npm run validate` checks they match.
+4. Run `npm run check`, commit, then tag the release `vX.Y.Z` with an annotated tag (`git tag -a vX.Y.Z -m "Cartridge Compass X.Y.Z"`).
+5. Push the commit and the tag, then publish a GitHub release for the tag. Use the matching `CHANGELOG.md` section as the release notes: `gh release create vX.Y.Z --title "Cartridge Compass X.Y.Z" --notes-file <that section>`, or the Releases page on GitHub.
